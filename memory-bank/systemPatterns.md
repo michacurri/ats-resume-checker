@@ -21,10 +21,12 @@ Frontend (React/TypeScript) ←→ Backend (Django REST) ←→ Database (SQLite
 
 ### Backend Architecture
 - **Framework**: Django 4.2 with Django REST Framework
-- **API Design**: RESTful endpoints with JSON responses
+- **API Design**: RESTful endpoints with JSON responses, custom @action decorators
 - **File Processing**: Multi-format support (PDF, DOCX, TXT)
 - **Database**: SQLite for development, PostgreSQL for production
-- **Authentication**: Django's built-in auth system (future enhancement)
+- **Authentication**: Django's built-in auth system with IsAuthenticated permissions
+- **User Isolation**: get_queryset() pattern for row-level security
+- **Business Logic**: perform_create() for model creation with custom logic
 
 ### File Processing Pipeline
 1. **Upload Handler**: Receive and validate file uploads
@@ -39,23 +41,33 @@ Frontend (React/TypeScript) ←→ Backend (Django REST) ←→ Database (SQLite
 ## Key Design Patterns
 
 ### API Design Pattern
-- **Resource-based URLs**: `/api/resumes/`, `/api/analysis/`
+- **Resource-based URLs**: `/api/resumes/`, `/api/jobs/`, `/api/evaluations/`
 - **HTTP Methods**: GET, POST, PUT, DELETE for CRUD operations
+- **Custom Actions**: @action decorator for non-CRUD endpoints (e.g., `/resumes/active/`)
 - **Status Codes**: Proper HTTP status codes for different scenarios
 - **Error Handling**: Consistent error response format
 - **Pagination**: For large result sets
+- **Authentication**: IsAuthenticated permission on all endpoints
+
+### User Isolation Pattern
+- **get_queryset()**: Override to filter by request.user automatically
+- **perform_create()**: Override to assign user and enforce business rules
+- **Row-Level Security**: Users can only access their own data
+- **Shared Resources**: JobDescriptions shared across users, linked via UserJobInterest
 
 ### File Processing Pattern
 - **Strategy Pattern**: Different parsers for different file formats
 - **Pipeline Pattern**: Sequential processing steps
 - **Error Recovery**: Graceful handling of parsing failures
 - **Validation**: File type, size, and content validation
+- **SHA-256 Hashing**: Content-based deduplication
 
-### Analysis Engine Pattern
-- **Modular Analysis**: Separate analyzers for different aspects
-- **Scoring System**: Normalized scores (0-100) across different metrics
-- **Recommendation Engine**: Rule-based suggestions with confidence scores
-- **Caching**: Store analysis results for performance
+### AI Evaluation Pattern
+- **Prompt Hashing**: Cache evaluations by prompt hash
+- **Modular Analysis**: Separate scoring (ATS, match) and suggestions
+- **Token Tracking**: Monitor LLM API usage
+- **Error Handling**: Retry logic for transient failures
+- **Result Storage**: Store in Evaluation model for history
 
 ## Data Flow Patterns
 
@@ -87,7 +99,34 @@ Frontend (React/TypeScript) ←→ Backend (Django REST) ←→ Database (SQLite
 - **Rate Limiting**: Prevent abuse of analysis endpoints (future)
 
 ## Performance Patterns
-- **Async Processing**: Non-blocking file processing
-- **Caching**: Cache analysis results and parsed content
-- **Database Optimization**: Proper indexing and query optimization
+- **Database Indexes**: Composite indexes on (user, is_active) for fast queries
+- **Prompt Caching**: Cache AI evaluations by prompt_hash
+- **Shared Resources**: JobDescriptions shared across users to reduce storage
+- **Async Processing**: Non-blocking file processing (future: Celery)
+- **Query Optimization**: get_queryset() filters at database level
 - **Frontend Optimization**: Code splitting and lazy loading
+
+## Enterprise Patterns Implemented
+
+### Database Optimization
+- **Composite Indexes**: `Index(fields=['user', 'is_active'])` for fast user-scoped queries
+- **Field Indexes**: `db_index=True` on frequently queried fields (sha256, is_active)
+- **Ordering**: Default ordering on models for consistent results
+
+### Code Quality
+- **Docstrings**: All methods documented (similar to JSDoc in TypeScript)
+- **__str__ Methods**: Human-readable model representations for admin and logging
+- **related_name**: Clean reverse ForeignKey lookups (e.g., `user.resumes.all()`)
+- **Type Safety**: TypeScript on frontend, Django ORM on backend
+
+### Security
+- **Authentication Required**: IsAuthenticated on all ViewSets
+- **User Isolation**: get_queryset() ensures users only see their own data
+- **Content Hashing**: SHA-256 for integrity and deduplication
+- **Input Validation**: Serializers validate all incoming data
+
+### Business Logic Patterns
+- **Single Active Resume**: Enforced in perform_create(), not database schema
+- **Deactivate Previous**: `Resume.objects.filter(user=user).update(is_active=False)`
+- **Automatic Assignment**: User assigned automatically from request.user
+- **Growth-Ready Schema**: Supports future multi-resume without migration

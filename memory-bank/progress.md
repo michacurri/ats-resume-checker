@@ -1,58 +1,93 @@
 # Progress: AI Resume Checker
 
-## Project Status: Foundation Phase
-**Overall Progress**: ~15% complete
-**Current Phase**: Initial setup and architecture planning
-**Next Milestone**: Core resume upload and analysis functionality
+## Project Status: Backend Foundation Complete
+**Overall Progress**: ~35% complete
+**Current Phase**: Backend models and views implemented, ready for AI integration
+**Last Updated**: 2025-10-22
+**Next Milestone**: AI evaluation engine and file upload handler
 
 ## What Works ✅
 
 ### Project Infrastructure
 - **Development Environment**: Django + React setup functional
 - **Dependencies**: All required packages installed and configured
-- **Build System**: Vite builds frontend successfully
-- **Django Server**: Basic Django development server runs
+- **Build System**: Vite builds frontend successfully (localhost:5174)
+- **Django Server**: Django development server runs with DRF
 - **Docker Setup**: Basic containerization structure in place
 - **Documentation**: Comprehensive memory bank system established
+- **Git Repository**: Connected to GitHub (michacurri/ats-resume-checker, main branch)
+- **Gitignore**: Configured for both root and frontend directories
 
 ### Technical Foundation
 - **Frontend Stack**: React 19 + TypeScript + Vite configured
-- **Backend Stack**: Django 4.2 + DRF ready for API development
+- **Backend Stack**: Django 4.2 + DRF with enterprise-grade patterns
 - **File Processing Libraries**: PyMuPDF, python-docx, BeautifulSoup4 installed
-- **Database**: SQLite configured and ready for models
+- **Database**: SQLite configured with complete schema
 - **Code Quality**: ESLint and TypeScript configured
+
+### Database Models (100% complete)
+- **Resume Model**: user, filename, text_blob, sha256, is_active, uploaded_at
+  - Composite index on (user, is_active) for performance
+  - related_name='resumes' for clean reverse lookups
+  - __str__ method for admin readability
+- **JobDescription Model**: source_url, text_blob, sha256, fetched_at
+  - Shared across users for efficiency
+  - Indexed sha256 for deduplication
+- **UserJobInterest Model**: user, job, added_at
+  - Many-to-many tracking of user interest in jobs
+  - unique_together constraint on (user, job)
+- **Evaluation Model**: resume, job, prompt_hash, model_used, ats_score, match_score, missing_keywords, suggestions, tokens_used, created_at
+  - Complete schema for AI evaluation results
+
+### ViewSets (80% complete)
+- **ResumeViewSet**: 
+  - ✅ IsAuthenticated permission
+  - ✅ get_queryset() scoped to user
+  - ✅ perform_create() enforces single active resume
+  - ✅ SHA-256 hashing of text_blob
+  - ✅ @action for active resume endpoint
+  - ❌ File upload handler not implemented
+- **JobDescriptionViewSet**: Basic CRUD (needs scraping logic)
+- **EvaluationViewSet**: Basic CRUD (needs AI integration)
 
 ## What's Left to Build 🚧
 
 ### Critical Missing Components (High Priority)
-1. **Database Models** (0% complete)
-   - Resume model for file metadata
-   - Analysis model for scores and results
-   - Recommendation model for suggestions
-   - Database migrations
+1. **AI Evaluation Engine** (0% complete)
+   - Prompt builder for resume + job analysis
+   - LLM API integration (OpenAI/Anthropic)
+   - Prompt hashing for caching
+   - Response parsing and storage
+   - Token usage tracking
+   - Error handling and retries
 
-2. **File Upload API** (0% complete)
-   - POST endpoint for resume uploads
-   - File validation and storage logic
-   - Error handling for invalid files
-   - File size and type restrictions
-
-3. **File Processing Pipeline** (0% complete)
+2. **File Upload Handler** (0% complete)
+   - Actual file upload endpoint implementation
    - PDF text extraction using PyMuPDF
    - DOCX content parsing using python-docx
    - Text cleaning and normalization
-   - Error handling for corrupted files
+   - File validation and size restrictions
+   - Integration with Resume model
 
-4. **Analysis Engine** (0% complete)
-   - ATS compatibility scoring
-   - Keyword analysis and extraction
-   - Format and structure assessment
-   - Recommendation generation logic
+3. **Job Scraping Utility** (0% complete)
+   - Web scraping function (scrape_job_text)
+   - URL validation and deduplication
+   - Text extraction and cleaning
+   - Integration with JobDescription model
+   - Error handling for failed scrapes
+
+4. **Database Migrations** (0% complete)
+   - Run makemigrations for all models
+   - Apply migrations to database
+   - Verify schema integrity
 
 5. **Frontend User Interface** (5% complete)
    - File upload component (drag-and-drop)
    - Analysis results dashboard
-   - Recommendation display interface
+   - Score visualization (ATS, match)
+   - Missing keywords display
+   - Suggestions and recommendations
+   - Interview prep guidance
    - Loading states and error handling
 
 ### Secondary Components (Medium Priority)
@@ -61,15 +96,23 @@
    - React Query setup for data fetching
    - Error handling and retry logic
    - Loading state management
+   - CORS configuration
 
-2. **User Experience** (0% complete)
-   - Progress indicators for file processing
-   - Interactive recommendation interface
-   - Responsive design implementation
-   - Accessibility features
+2. **Career Trajectory Features** (0% complete)
+   - Analyze job interest patterns
+   - Infer career goals from job history
+   - Personalized resume feedback
+   - Skill gap visualization
+   - Career growth path suggestions
 
-3. **Testing** (0% complete)
-   - Unit tests for analysis engine
+3. **TTL & Cleanup** (0% complete)
+   - 90-day TTL for stale JobDescriptions
+   - Prune unused jobs (no user interest)
+   - Archive old evaluations
+   - Celery tasks or management commands
+
+4. **Testing** (0% complete)
+   - Unit tests for AI evaluation
    - API endpoint testing
    - Frontend component testing
    - Integration testing
@@ -77,31 +120,43 @@
 ### Future Enhancements (Low Priority)
 1. **Authentication System**
    - User registration and login
-   - Resume history and management
+   - Resume history and management (multi-resume support)
    - User preferences and settings
+   - Social auth (Google, LinkedIn)
 
 2. **Advanced Features**
    - Resume templates and formatting
-   - Job description matching
-   - Industry-specific analysis
+   - Industry-specific analysis models
    - Resume versioning and comparison
+   - Interview prep guidance generator
+   - Job board integrations (LinkedIn, Indeed)
 
 3. **Performance Optimization**
-   - Caching for analysis results
-   - Background job processing
+   - Caching for AI evaluation results (by prompt_hash)
+   - Background job processing (Celery)
    - Database query optimization
    - Frontend bundle optimization
+   - CDN for static assets
+
+4. **Enterprise Features**
+   - Team accounts and bulk analysis
+   - API access for third-party integrations
+   - White-label solutions
+   - Analytics dashboard
+   - Custom AI model training
 
 ## Current Status by Component
 
 ### Backend (Django)
 - **Settings**: ✅ Basic configuration complete
-- **URLs**: ✅ Basic routing setup
-- **Models**: ❌ Empty - needs implementation
-- **Views**: ❌ Empty - needs API endpoints
-- **Serializers**: ❌ Not created - needs implementation
+- **URLs**: ✅ Routing setup with DRF router
+- **Models**: ✅ Complete (Resume, JobDescription, UserJobInterest, Evaluation)
+- **Views**: ⚠️ Partial (ViewSets created, need file upload & AI integration)
+- **Serializers**: ✅ Basic serializers created
 - **File Processing**: ❌ Not implemented
-- **Analysis Engine**: ❌ Not implemented
+- **AI Evaluation**: ❌ Not implemented
+- **Job Scraping**: ❌ Not implemented
+- **Migrations**: ❌ Not run yet
 
 ### Frontend (React)
 - **Setup**: ✅ Vite + TypeScript configured
@@ -114,29 +169,41 @@
 
 ### Database
 - **Configuration**: ✅ SQLite setup complete
-- **Migrations**: ❌ No custom models yet
-- **Schema**: ❌ No resume-related tables
+- **Schema Design**: ✅ Complete (4 models with relationships)
+- **Migrations**: ❌ Not run yet (models defined but not applied)
+- **Indexes**: ✅ Composite indexes defined for performance
 - **Data**: ❌ No test data
 
 ### File Processing
-- **PDF Support**: ❌ PyMuPDF not integrated
-- **DOCX Support**: ❌ python-docx not integrated
+- **PDF Support**: ⚠️ PyMuPDF installed but not integrated
+- **DOCX Support**: ⚠️ python-docx installed but not integrated
 - **Text Processing**: ❌ No text extraction logic
 - **Error Handling**: ❌ No file validation
+- **Upload Endpoint**: ❌ Not implemented
+
+### Git & Deployment
+- **Repository**: ✅ Connected to GitHub (michacurri/ats-resume-checker)
+- **Branch**: ✅ Using main branch
+- **Gitignore**: ✅ Configured for root and frontend
+- **Docker**: ⚠️ Basic Dockerfiles exist but not tested
+- **CI/CD**: ❌ Not configured
 
 ## Known Issues 🐛
 
 ### Technical Issues
-1. **Empty Django App**: resume_api app has no models or views
-2. **No CORS Configuration**: Frontend can't communicate with backend
+1. **Migrations Not Applied**: Models defined but database not updated
+2. **No CORS Configuration**: Frontend can't communicate with backend yet
 3. **File Upload Limits**: No size or type restrictions configured
 4. **Basic Frontend**: Still showing default Vite counter app
+5. **No AI Integration**: LLM API not connected
+6. **No File Upload**: Endpoint exists but file handling not implemented
 
 ### Configuration Issues
-1. **Django Settings**: Not optimized for file uploads
+1. **Django Settings**: Not optimized for file uploads (MEDIA_ROOT, FILE_UPLOAD_MAX_MEMORY_SIZE)
 2. **Frontend API Base URL**: Not configured
-3. **Environment Variables**: Not set up for different environments
-4. **Docker Configuration**: Basic setup only
+3. **Environment Variables**: Not set up for different environments (.env files)
+4. **Docker Configuration**: Basic setup only, not production-ready
+5. **LLM API Keys**: Not configured
 
 ## Evolution of Project Decisions
 
@@ -146,40 +213,56 @@
 - **Vite**: Fast development and building
 - **SQLite**: Simple for development phase
 
-### Decisions Under Review
-- **Analysis Approach**: Rule-based vs ML-based (leaning toward rule-based for MVP)
-- **UI Framework**: Need to choose CSS framework or custom styling
-- **File Storage**: Local filesystem vs cloud storage
-- **Authentication**: Anonymous vs user-based analysis
+### New Decisions (Today - 2025-10-22)
+- **Single Active Resume (MVP)**: Enforced in business logic, not schema - enables future growth
+- **Shared Job Descriptions**: Jobs shared across users to reduce storage and enable insights
+- **UserJobInterest Model**: Tracks user interest in jobs for personalization
+- **Enterprise Patterns**: Composite indexes, docstrings, related_name, authentication
+- **Git Workflow**: Using main branch, connected to GitHub
 
-### Recent Insights
-- **File Processing Complexity**: Multiple formats require careful error handling
-- **Analysis Subjectivity**: Need clear scoring criteria and explanations
-- **Performance Requirements**: Fast processing essential for user adoption
-- **Scalability Planning**: Consider file storage and processing limits early
+### Decisions Under Review
+- **LLM Provider**: OpenAI vs Anthropic vs local models
+- **UI Framework**: Need to choose CSS framework or custom styling
+- **File Storage**: Local filesystem vs cloud storage (S3)
+- **Job Scraping**: BeautifulSoup vs Playwright vs API integrations
+- **TTL Implementation**: Celery tasks vs Django management commands
+
+### Recent Insights (Today)
+- **MVP vs Growth Balance**: Single resume for MVP, but schema supports multiple for future
+- **Business Model Evolution**: From resume checker to career coaching platform
+- **Shared Resources**: Job descriptions shared across users enable better insights
+- **Performance Optimization**: Composite indexes critical for user-scoped queries
+- **Django Patterns**: get_queryset() for isolation, perform_create() for business logic
 
 ## Next Sprint Goals
 
-### Week 1: Backend Foundation
-- Implement Resume, Analysis, and Recommendation models
-- Create file upload API endpoint
-- Build basic file processing pipeline
+### Week 1: AI Integration & File Processing
+- Run database migrations for all models
+- Implement AI evaluation engine (prompt builder, LLM integration)
+- Build file upload handler (PDF/DOCX parsing)
+- Create job scraping utility
 - Set up CORS for frontend communication
+- Configure environment variables for LLM API keys
 
-### Week 2: Analysis Engine
-- Implement ATS compatibility scoring
-- Build keyword analysis system
-- Create recommendation generation logic
-- Add comprehensive error handling
-
-### Week 3: Frontend Development
-- Build file upload interface
+### Week 2: Frontend Development
+- Build file upload interface with drag-and-drop
 - Create analysis results dashboard
+- Implement score visualization (ATS, match)
+- Display missing keywords and suggestions
 - Implement API integration with React Query
 - Add loading states and error handling
 
+### Week 3: Polish & Testing
+- Add interview prep guidance generation
+- Implement career trajectory analysis
+- Add comprehensive error handling
+- Write unit tests for AI evaluation
+- Test end-to-end flow
+- Deploy to staging environment
+
 ### Success Criteria
-- Successfully upload and process a resume file
-- Generate meaningful analysis scores
-- Display actionable recommendations
+- Successfully upload resume and analyze against job description
+- Generate meaningful ATS and match scores
+- Display missing keywords and actionable suggestions
 - Provide smooth user experience from upload to results
+- Cache AI evaluations by prompt hash for performance
