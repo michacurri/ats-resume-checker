@@ -1,0 +1,28 @@
+# Node
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+venv/
+*.sqlite3
+
+# Django
+*.log
+*.pot
+*.pyc
+db.sqlite3
+media/
+staticfiles/
+
+# Vite
+.vite/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.cursor/
+.vscode/
+.idea/
